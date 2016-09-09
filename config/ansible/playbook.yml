@@ -21,6 +21,7 @@
       - 'python-passlib'
       - 'rrdtool'
       - 'snmp'
+      - 'supervisor'
       - 'zlib1g'
       - 'zlib1g-dev'
     cacti_dl_file: 'cacti-{{ cacti_version }}.tar.gz'

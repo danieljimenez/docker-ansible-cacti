@@ -10,8 +10,8 @@ ENV CACTI_VERSION="0.8.8g" \
     CACTI_USER="cactiuser" \
     CACTI_USER_PASSWORD="cacti"
 
-# Copy Ansible Playbook
-COPY Ansible/ /
+# Copy Ansible Related Files
+COPY config/ansible/ /
 
 # Run Ansible playbook
 RUN ansible-playbook -i "localhost," -c local /playbook.yml \
@@ -31,7 +31,10 @@ VOLUME /config
 # Copy Docker Entrypoint
 COPY docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
+
+COPY config/supervisord/*.conf /etc/supervisor/conf.d/
 
 # Expose ports
 EXPOSE 80 443
