@@ -3,6 +3,11 @@
   become: true
   connection: local
   vars:
+    cacti_cron_schedule:
+      minute: '*/5'
+      hour: '*'
+      day: '*'
+      month: '*'
     cacti_db_info:
       host: '{{ cacti_db_host }}'
       port: '3306'
@@ -71,3 +76,14 @@
         path: "/config/.cacti_schema_imported"
         state: "touch"
       when: cacti_schema_imported.changed
+
+    - name: Creating Cacti Poller Cron
+      cron:
+        name: "Cacti poller cron"
+        user: "{{ cacti_user_info.name }}"
+        minute: "{{ cacti_cron_schedule.minute }}"
+        hour: "{{ cacti_cron_schedule.hour }}"
+        day: "{{ cacti_cron_schedule.day }}"
+        month: "{{ cacti_cron_schedule.month }}"
+        job: "php {{ cacti_site_dir }}/poller.php 2>&1 >/dev/null"
+        cron_file: "cacti_poller"

@@ -7,3 +7,4 @@ ansible-playbook -i "localhost," -c local /docker-entrypoint.yml \
   cacti_user_password=$CACTI_USER_PASSWORD"
 
 apache2ctl -D FOREGROUND
+/usr/sbin/cron -f
