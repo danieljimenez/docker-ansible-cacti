@@ -2,14 +2,13 @@ FROM mrlesmithjr/ubuntu-ansible:14.04
 
 MAINTAINER Larry Smith Jr. <mrlesmithjr@gmail.com>
 
-
 ENV CACTI_VERSION="0.8.8g" \
     CACTI_DB="cactidb" \
     CACTI_DB_HOST="db" \
     CACTI_DB_PASSWORD="cacti" \
     CACTI_DB_USER="cactiuser" \
     CACTI_USER="cactiuser" \
-    CACTI_USER_PASSWORD="cacti" \
+    CACTI_USER_PASSWORD="cacti"
 
 # Copy Ansible Playbook
 COPY Ansible/ /
