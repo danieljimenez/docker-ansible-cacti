@@ -87,3 +87,15 @@
         month: "{{ cacti_cron_schedule.month }}"
         job: "php {{ cacti_site_dir }}/poller.php 2>&1 >/dev/null"
         cron_file: "cacti_poller"
+
+    - name: Configuring RRA/LOG Directory Permissions
+      file:
+        path: "{{ cacti_site_dir }}/{{ item }}"
+        state: "directory"
+        recurse: yes
+        owner: "{{ cacti_user_info.name }}"
+        group: "{{ cacti_web_group }}"
+        mode: 0775
+      with_items:
+        - 'log'
+        - 'rra'

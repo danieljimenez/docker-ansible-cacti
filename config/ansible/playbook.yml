@@ -142,7 +142,7 @@
         path: "{{ cacti_site_dir }}/{{ item }}"
         state: "directory"
         recurse: yes
-        owner: "{{ cacti_web_owner }}"
+        owner: "{{ cacti_user_info.name }}"
         group: "{{ cacti_web_group }}"
         mode: 0775
       with_items:
