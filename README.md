@@ -26,11 +26,12 @@ services:
       - "config:/config"
     restart: "always"
     environment:
+      CACTI_DB: "cactidb"
       CACTI_DB_HOST: "db"
-      MYSQL_ROOT_PASSWORD: "cacti"
-      MYSQL_DATABASE: "cactidb"
-      MYSQL_USER: "cactiuser"
-      MYSQL_PASSWORD: "cacti"
+      CACTI_DB_PASSWORD: "cacti"
+      CACTI_DB_USER: "cactiuser"
+      CACTI_USER: "cactiuser"
+      CACTI_USER_PASSWORD: "cacti"
   db:
     image: "mrlesmithjr/mysql:latest"
     volumes:
