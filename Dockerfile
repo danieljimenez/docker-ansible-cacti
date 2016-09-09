@@ -9,7 +9,7 @@ ENV CACTI_VERSION="0.8.8h" \
     CACTI_DB_PASSWORD="cacti" \
     CACTI_DB_USER="cactiuser" \
     CACTI_USER="cactiuser" \
-    CACTI_USER_PASSWORD="cacti" \
+    CACTI_USER_PASSWORD="cacti"
 
 # Copy Ansible Playbook
 COPY Ansible/ /
