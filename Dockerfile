@@ -3,7 +3,7 @@ FROM mrlesmithjr/ubuntu-ansible:14.04
 MAINTAINER Larry Smith Jr. <mrlesmithjr@gmail.com>
 
 
-ENV CACTI_VERSION="0.8.8g" \
+ENV CACTI_VERSION="0.8.8h" \
     CACTI_DB="cactidb" \
     CACTI_DB_HOST="db" \
     CACTI_DB_PASSWORD="cacti" \
