@@ -1,0 +1,72 @@
+---
+- hosts: localhost
+  become: true
+  connection: local
+  vars:
+    cacti_db_info:
+      host: '{{ cacti_db_host }}'
+      port: '3306'
+      db_name: '{{ cacti_db }}'
+      user: '{{ cacti_db_user }}'
+      password: '{{ cacti_db_password }}'
+    cacti_site_dir: "{{ cacti_web_root }}/cacti"
+    cacti_user_info:
+      name: '{{ cacti_user }}'
+      password: '{{ cacti_user_password }}'
+      comment: 'Cacti User Account'
+    cacti_webserver_type: "apache2"
+  roles:
+  tasks:
+    - name: setting fact Debian apache2
+      set_fact:
+        cacti_web_group: "www-data"
+        cacti_web_owner: "www-data"
+        cacti_web_root: "/var/www/html"
+        cacti_webserver_handler: "apache2"
+      when: >
+            ansible_os_family == "Debian" and
+            cacti_webserver_type == "apache2"
+
+    - name: Creating Cacti User
+      user:
+        name: "{{ cacti_user_info.name }}"
+        password: "{{ cacti_user_info.password }}"
+        comment: "{{ cacti_user_info.comment|default(omit) }}"
+        generate_ssh_key: yes
+
+    - name: Configuring Cacti Settings
+      template:
+        src: "/config.php.j2"
+        dest: "{{ cacti_site_dir }}/include/config.php"
+        owner: "{{ cacti_web_owner }}"
+        group: "{{ cacti_web_group }}"
+        mode: 0644
+
+    - name: Checking For MySQL Connection
+      wait_for:
+        port: 3306
+        host: "{{ cacti_db_info.host }}"
+        delay: 20
+      changed_when: false
+
+    - name: Checking If Cacti Schema Has Been Imported
+      stat:
+        path: "/config/.cacti_schema_imported"
+      register: "cacti_schema_imported_check"
+
+    - name: Importing Cacti Schema
+      mysql_db:
+        login_host: "{{ cacti_db_info.host }}"
+        login_password: "{{ cacti_db_info.password }}"
+        login_user: "{{ cacti_db_info.user }}"
+        name: "{{ cacti_db_info.db_name }}"
+        state: "import"
+        target: "{{ cacti_site_dir }}/cacti.sql"
+      register: "cacti_schema_imported"
+      when: not cacti_schema_imported_check.stat.exists
+
+    - name: Marking Cacti Schema As Imported
+      file:
+        path: "/config/.cacti_schema_imported"
+        state: "touch"
+      when: cacti_schema_imported.changed

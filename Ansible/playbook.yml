@@ -1,0 +1,156 @@
+---
+- hosts: localhost
+  become: true
+  connection: local
+  vars:
+    cacti_db_info:
+      host: '{{ cacti_db_host }}'
+      port: '3306'
+      db_name: '{{ cacti_db }}'
+      user: '{{ cacti_db_user }}'
+      password: '{{ cacti_db_password }}'
+    cacti_debian_packages:
+      - 'libapache2-mod-php{{ php_ver }}'
+      - 'mysql-client'
+      - 'php{{ php_ver }}'
+      - 'php{{ php_ver }}-cli'
+      - 'php{{ php_ver }}-gd'
+      - 'php{{ php_ver }}-mysql'
+      - 'php{{ php_ver }}-snmp'
+      - 'python-mysqldb'
+      - 'python-passlib'
+      - 'rrdtool'
+      - 'snmp'
+      - 'zlib1g'
+      - 'zlib1g-dev'
+    cacti_dl_file: 'cacti-{{ cacti_version }}.tar.gz'
+    cacti_dl_url: 'http://www.cacti.net/downloads/'
+    cacti_site_dir: "{{ cacti_web_root }}/cacti"
+    cacti_url_path: '/cacti/'
+    cacti_user_info:
+      name: '{{ cacti_user }}'
+      password: '{{ cacti_user_password }}'
+      comment: 'Cacti User Account'
+    cacti_webserver_type: 'apache2'
+    gosu_ver: '1.9'
+  roles:
+  tasks:
+    - name: Installing apt-transport-https
+      apt:
+        name: "apt-transport-https"
+        state: "present"
+
+    - name: Installing ca-certificates
+      apt:
+        name: "ca-certificates"
+        state: "latest"
+
+    - name: Installing dumb-init
+      apt:
+        deb: "https://github.com/Yelp/dumb-init/releases/download/v1.0.2/dumb-init_1.0.2_amd64.deb"
+
+    - name: Installing gosu
+      get_url:
+        url: "https://github.com/tianon/gosu/releases/download/{{ gosu_ver }}/gosu-amd64"
+        dest: "/usr/local/bin/gosu"
+        mode: 0755
+
+    - name: setting fact Debian apache2
+      set_fact:
+        cacti_web_group: "www-data"
+        cacti_web_owner: "www-data"
+        cacti_web_root: "/var/www/html"
+        cacti_webserver_handler: "apache2"
+      when: >
+            ansible_os_family == "Debian" and
+            cacti_webserver_type == "apache2"
+
+    - name: setting PHP version
+      set_fact:
+        php_path: 'etc/php5'  #no leading / for template path
+        php_ver: 5
+      when: >
+            ansible_distribution == "Debian" or
+            (ansible_distribution == "Ubuntu" and
+            ansible_distribution_version <= '14.04')
+
+    - name: setting PHP version
+      set_fact:
+        php_path: 'etc/php/7.0'  #no leading / for template path
+        php_ver: 7.0
+      when: >
+            (ansible_distribution == "Ubuntu" and
+            ansible_distribution_version >= '16.04')
+
+    - name: Installing {{ cacti_webserver_type }}
+      apt:
+        name: "{{ cacti_webserver_type }}"
+        state: "present"
+        install_recommends: no
+
+    - name: Installing Dependencies
+      apt:
+        name: "{{ item }}"
+        state: "present"
+        install_recommends: no
+      with_items: '{{ cacti_debian_packages }}'
+
+    - name: Creating Cacti User
+      user:
+        name: "{{ cacti_user_info.name }}"
+        password: "{{ cacti_user_info.password }}"
+        comment: "{{ cacti_user_info.comment|default(omit) }}"
+        generate_ssh_key: yes
+
+    - name: Downloading Cacti
+      get_url:
+        url: "{{ cacti_dl_url }}/{{ cacti_dl_file }}"
+        dest: "{{ cacti_web_root }}/{{ cacti_dl_file }}"
+
+    - name: Extracting Cacti
+      unarchive:
+        src: "{{ cacti_web_root }}/{{ cacti_dl_file }}"
+        dest: "{{ cacti_web_root }}"
+        copy: no
+        creates: "{{ cacti_web_root }}/cacti-{{ cacti_version }}/index.php"
+
+    - name: Creating Cacti Symlink
+      file:
+        src: "{{ cacti_web_root }}/cacti-{{ cacti_version }}"
+        dest: "{{ cacti_site_dir }}"
+        state: "link"
+
+    - name: Setting Site Permissions
+      file:
+        path: "{{ cacti_web_root }}/cacti-{{ cacti_version }}"
+        state: "directory"
+        recurse: yes
+        owner: "{{ cacti_web_owner }}"
+        group: "{{ cacti_web_group }}"
+
+    - name: Configuring Cacti Settings
+      template:
+        src: "/config.php.j2"
+        dest: "{{ cacti_site_dir }}/include/config.php"
+        owner: "{{ cacti_web_owner }}"
+        group: "{{ cacti_web_group }}"
+        mode: 0644
+
+    - name: Configuring RRA/LOG Directory Permissions
+      file:
+        path: "{{ cacti_site_dir }}/{{ item }}"
+        state: "directory"
+        recurse: yes
+        owner: "{{ cacti_web_owner }}"
+        group: "{{ cacti_web_group }}"
+        mode: 0775
+      with_items:
+        - 'log'
+        - 'rra'
+
+    - name: Cleaning Up
+      file:
+        path: "{{ item }}"
+        state: "absent"
+      with_items:
+        - '{{ cacti_web_root }}/{{ cacti_dl_file }}'
