@@ -9,7 +9,8 @@
       db_name: '{{ cacti_db }}'
       user: '{{ cacti_db_user }}'
       password: '{{ cacti_db_password }}'
-    cacti_site_dir: "{{ cacti_web_root }}/cacti"
+    cacti_site_dir: '{{ cacti_web_root }}/cacti'
+    cacti_url_path: '/cacti/'
     cacti_user_info:
       name: '{{ cacti_user }}'
       password: '{{ cacti_user_password }}'
