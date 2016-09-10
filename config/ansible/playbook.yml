@@ -12,6 +12,7 @@
     cacti_debian_packages:
       - 'libapache2-mod-php{{ php_ver }}'
       - 'mysql-client'
+      - 'openssh-client'
       - 'php{{ php_ver }}'
       - 'php{{ php_ver }}-cli'
       - 'php{{ php_ver }}-gd'
@@ -36,6 +37,10 @@
     gosu_ver: '1.9'
   roles:
   tasks:
+    - name: Updating Apt-Cache
+      apt:
+        update_cache: yes
+
     - name: Installing apt-transport-https
       apt:
         name: "apt-transport-https"
